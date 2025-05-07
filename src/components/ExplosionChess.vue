@@ -1,11 +1,9 @@
 <template>
-  <div class="game-container">
     <div class="game-info">
       <p>当前玩家：{{ currentPlayer }}</p>
       <p>当前状态：{{ getCurrentStatus(currentStatus) }}</p>
       <button @click="resetGame">重置游戏</button>
     </div>
-  </div>
   <div class="chess-board">
     <div 
       v-for="(row, rowIndex) in board" 
@@ -37,7 +35,14 @@
 <script setup>
 import { ref } from 'vue';
 
-const boardSize = ref(0);
+const props = defineProps({
+  boardSize: {
+    type: Number,
+    required: true
+  }
+});
+
+const boardSize = ref(props.boardSize);
 const players = ['player1', 'player2'];
 const currentPlayer = ref(players[0]);
 const currentStatus = ref(0); // 0: 正常游戏状态, 1: 扩散中, 2: 游戏结束
@@ -47,9 +52,9 @@ const board = ref(initializeBoard());
 
 function initializeBoard() {
   const board = [];
-  for (let i = 0; i < boardSize; i++) {
+  for (let i = 0; i < boardSize.value; i++) {
     const row = [];
-    for (let j = 0; j < boardSize; j++) {
+    for (let j = 0; j < boardSize.value; j++) {
       row.push({
         subCells: createSubCells(i, j),
         owner: null
@@ -75,15 +80,15 @@ function createSubCells(row, col) {
 function isCorner(row, col) {
   return (
     (row === 0 && col === 0) ||
-    (row === 0 && col === boardSize - 1) ||
-    (row === boardSize - 1 && col === 0) ||
-    (row === boardSize - 1 && col === boardSize - 1)
+    (row === 0 && col === boardSize.value - 1) ||
+    (row === boardSize.value - 1 && col === 0) ||
+    (row === boardSize.value - 1 && col === boardSize.value - 1)
   );
 }
 
 function isEdge(row, col) {
   return (
-    (row === 0 || row === boardSize - 1 || col === 0 || col === boardSize - 1) &&
+    (row === 0 || row === boardSize.value - 1 || col === 0 || col === boardSize.value - 1) &&
     !isCorner(row, col)
   );
 }
@@ -141,7 +146,7 @@ function explodeCell(row, col) {
     const newCol = col + dy;
     
     // 检查是否在棋盘范围内
-    if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+    if (newRow >= 0 && newRow < boardSize.value && newCol >= 0 && newCol < boardSize.value) {
       const targetCell = board.value[newRow][newCol];
       
       // 如果目标格子未被任何人占领
@@ -212,8 +217,8 @@ function checkGameEnd() {
   const owners = new Set();
   
   // 收集所有被占领的格子
-  for (let i = 0; i < boardSize; i++) {
-    for (let j = 0; j < boardSize; j++) {
+  for (let i = 0; i < boardSize.value; i++) {
+    for (let j = 0; j < boardSize.value; j++) {
       if (board.value[i][j].owner) {
         owners.add(board.value[i][j].owner);
       }
@@ -234,6 +239,7 @@ function checkGameEnd() {
 }
 function resetGame() {
   // 重置棋盘
+  boardSize.value = props.boardSize;
   board.value = initializeBoard();
   // 重置玩家
   currentPlayer.value = players[0];
@@ -336,5 +342,34 @@ function getCurrentStatus(N) {
   border-radius: 50%;
   animation: particle 0.6s ease-out;
 }
+.game-info {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  background: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+}
 
+.game-info p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.game-info button {
+  background: #4a90e2;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.game-info button:hover {
+  background: #357abd;
+}
 </style>
