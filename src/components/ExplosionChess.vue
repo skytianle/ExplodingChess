@@ -68,7 +68,6 @@ function initializeBoard() {
     row.push();
     board.push(row);
   }
-  console.log(board);
   return board;
 }
 
@@ -102,7 +101,7 @@ function isCenter(row, col) {
   return !isCorner(row, col) && !isEdge(row, col);
 }
 
-function handleCellClick(row, col , sub) {
+async function handleCellClick(row, col , sub) {
   if (currentStatus.value !== 0) {
     alert('游戏结束或者正在扩散或者正在结算，不允许行动');
     return;
@@ -135,89 +134,80 @@ function handleCellClick(row, col , sub) {
 
 async function explodeCell(row, col) {
   currentStatus.value = 1;
-
-  await sleep(2000);
-  const directions = [
-    [-1, 0], [1, 0], [0, -1], [0, 1] // 上下左右四个方向
-  ];
+  await sleep(1000);
   const owner = board.value[row][col].owner;
   
   // 清空当前格子的所有子格子
   board.value[row][col].subCells = board.value[row][col].subCells.map(() => ({ owner: null }));
   board.value[row][col].owner = null;
   
-  // 向四周扩散
-  for (const [dx, dy] of directions) {
+  // 收集所有扩散任务
+  const explosions = [];
+  const directions = [
+    [-1, 0], [1, 0], [0, -1], [0, 1]
+  ];
+
+  // 处理单个方向扩散的异步函数
+  const processDirection = async (dx, dy) => {
     const newRow = row + dx;
     const newCol = col + dy;
     
-    // 检查是否在棋盘范围内
     if (newRow >= 0 && newRow < boardSize.value && newCol >= 0 && newCol < boardSize.value) {
       const targetCell = board.value[newRow][newCol];
       
-      // 如果目标格子未被任何人占领
       if (!targetCell.owner) {
-        // 找到第一个未被占领的子格子
         const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
         if (emptySubCellIndex !== -1) {
-          // 占领格子
           targetCell.owner = owner;
           targetCell.subCells[emptySubCellIndex].owner = owner;
-          // 触发动画
           targetCell.subCells[emptySubCellIndex].animate = true;
           
-          // 检查是否填满所有子格子
           if (targetCell.subCells.every(subCell => subCell.owner)) {
-            targetCell.owner = owner;
-            explodeCell(newRow, newCol); // 递归爆炸
+            explosions.push(await explodeCell(newRow, newCol));
           }
         }
       } else if (targetCell.owner === owner) {
-        // 找到第一个未被占领的子格子
         const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
         if (emptySubCellIndex !== -1) {
-          // 占领格子
           targetCell.owner = owner;
           targetCell.subCells[emptySubCellIndex].owner = owner;
-          // 触发动画
           targetCell.subCells[emptySubCellIndex].animate = true;
           
-          // 检查是否填满所有子格子
           if (targetCell.subCells.every(subCell => subCell.owner)) {
-            targetCell.owner = owner;
-            explodeCell(newRow, newCol); // 递归爆炸
+            explosions.push(await explodeCell(newRow, newCol));
           }
         }
       } else {
-       targetCell.owner = owner;
-       targetCell.subCells.forEach(subCell => {
-        if(subCell.owner) {
-          subCell.owner = owner;
-          subCell.animate = true;
-        }
-       })
-       // 找到第一个未被占领的子格子
-       const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
+        targetCell.owner = owner;
+        targetCell.subCells.forEach(subCell => {
+          if(subCell.owner) {
+            subCell.owner = owner;
+            subCell.animate = true;
+          }
+        });
+        const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
         if (emptySubCellIndex !== -1) {
-          // 占领格子
           targetCell.owner = owner;
           targetCell.subCells[emptySubCellIndex].owner = owner;
-          // 触发动画
           targetCell.subCells[emptySubCellIndex].animate = true;
           
-          // 检查是否填满所有子格子
           if (targetCell.subCells.every(subCell => subCell.owner)) {
-            targetCell.owner = owner;
-            explodeCell(newRow, newCol); // 递归爆炸
+            explosions.push(await explodeCell(newRow, newCol));
           }
         }
       }
     }
-  }
+  };
+
+  // 并行处理所有方向的扩散
+  await Promise.all(directions.map(([dx, dy]) => processDirection(dx, dy)));
   
-  console.log(getCurrentStatus(currentStatus.value));
-  // 检查游戏是否结束
-    checkGameEnd();
+  // 等待所有递归爆炸完成
+  await Promise.all(explosions);
+  
+  console.log(getCurrentStatus(currentStatus.value))
+  // 最后执行游戏结束检查
+  checkGameEnd();
 }
 
 function checkGameEnd() {
@@ -237,7 +227,6 @@ function checkGameEnd() {
     const winner = [...owners][0];
     currentStatus.value = 3;
     setTimeout(() => {
-      alert(`${winner} 获胜！`);
       currentStatus.value = 2;
     }, 500);
   } else {
@@ -261,7 +250,7 @@ function getCurrentStatus(N) {
     case 1:
       return `${currentPlayer.value} 正在爆炸`;
     case 2:
-      return "游戏结束";
+      return "已结束 "+`${currentPlayer.value}获胜`;
     case 3:
       return "正在结算";
     default:
