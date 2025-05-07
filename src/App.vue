@@ -12,7 +12,7 @@
       </div>
       <button @click="startGame" class="start-btn">开始游戏</button>
     </div>
-    <ExplosionChess v-else :board-size="selectedSize" />
+    <ExplosionChess v-else :board-size="selectedSize" @reset-board-size="handleResetBoard" />
   </div>
 </template>
 
@@ -21,7 +21,11 @@ import { ref } from 'vue'
 import ExplosionChess from './components/ExplosionChess.vue'
 
 const gameStarted = ref(false)
-const selectedSize = ref(5)
+const selectedSize = ref(5);
+
+const handleResetBoard = () => {
+  gameStarted.value = false;
+}
 
 const startGame = () => {
   gameStarted.value = true

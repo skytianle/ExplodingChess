@@ -3,6 +3,7 @@
       <p>当前玩家：{{ currentPlayer }}</p>
       <p>当前状态：{{ getCurrentStatus(currentStatus) }}</p>
       <button @click="resetGame">重置游戏</button>
+      <button @click="$emit('reset-board-size')">退出并重选棋盘大小</button>
     </div>
   <div class="chess-board">
     <div 
@@ -34,6 +35,10 @@
 
 <script setup>
 import { ref } from 'vue';
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 const props = defineProps({
   boardSize: {
@@ -128,9 +133,10 @@ function handleCellClick(row, col , sub) {
   currentPlayer.value = currentPlayer.value === players[0] ? players[1] : players[0];
 }
 
-function explodeCell(row, col) {
+async function explodeCell(row, col) {
   currentStatus.value = 1;
 
+  await sleep(2000);
   const directions = [
     [-1, 0], [1, 0], [0, -1], [0, 1] // 上下左右四个方向
   ];
@@ -209,6 +215,7 @@ function explodeCell(row, col) {
     }
   }
   
+  console.log(getCurrentStatus(currentStatus.value));
   // 检查游戏是否结束
     checkGameEnd();
 }
