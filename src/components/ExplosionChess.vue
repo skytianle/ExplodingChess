@@ -1,4 +1,11 @@
 <template>
+  <div class="game-container">
+    <div class="game-info">
+      <p>当前玩家：{{ currentPlayer }}</p>
+      <p>当前状态：{{ getCurrentStatus(currentStatus) }}</p>
+      <button @click="resetGame">重置游戏</button>
+    </div>
+  </div>
   <div class="chess-board">
     <div 
       v-for="(row, rowIndex) in board" 
@@ -30,9 +37,10 @@
 <script setup>
 import { ref } from 'vue';
 
-const boardSize = 5; // 5x5棋盘
+const boardSize = ref(0);
 const players = ['player1', 'player2'];
 const currentPlayer = ref(players[0]);
+const currentStatus = ref(0); // 0: 正常游戏状态, 1: 扩散中, 2: 游戏结束
 
 // 初始化棋盘
 const board = ref(initializeBoard());
@@ -62,7 +70,6 @@ function createSubCells(row, col) {
   } else {
     return Array(4).fill().map(() => ({ owner: null }));
   }
-  return [];
 }
 
 function isCorner(row, col) {
@@ -86,6 +93,10 @@ function isCenter(row, col) {
 }
 
 function handleCellClick(row, col , sub) {
+  if (currentStatus.value !== 0) {
+    alert('游戏结束或者正在扩散或者正在结算，不允许行动');
+    return;
+  }
   const cell = board.value[row][col];
   const subcell = board.value[row][col].subCells[sub];
 
@@ -113,6 +124,8 @@ function handleCellClick(row, col , sub) {
 }
 
 function explodeCell(row, col) {
+  currentStatus.value = 1;
+
   const directions = [
     [-1, 0], [1, 0], [0, -1], [0, 1] // 上下左右四个方向
   ];
@@ -131,13 +144,55 @@ function explodeCell(row, col) {
     if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
       const targetCell = board.value[newRow][newCol];
       
-      // 如果目标格子未被完全占领
+      // 如果目标格子未被任何人占领
       if (!targetCell.owner) {
         // 找到第一个未被占领的子格子
         const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
         if (emptySubCellIndex !== -1) {
-          // 占领子格子
+          // 占领格子
+          targetCell.owner = owner;
           targetCell.subCells[emptySubCellIndex].owner = owner;
+          // 触发动画
+          targetCell.subCells[emptySubCellIndex].animate = true;
+          
+          // 检查是否填满所有子格子
+          if (targetCell.subCells.every(subCell => subCell.owner)) {
+            targetCell.owner = owner;
+            explodeCell(newRow, newCol); // 递归爆炸
+          }
+        }
+      } else if (targetCell.owner === owner) {
+        // 找到第一个未被占领的子格子
+        const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
+        if (emptySubCellIndex !== -1) {
+          // 占领格子
+          targetCell.owner = owner;
+          targetCell.subCells[emptySubCellIndex].owner = owner;
+          // 触发动画
+          targetCell.subCells[emptySubCellIndex].animate = true;
+          
+          // 检查是否填满所有子格子
+          if (targetCell.subCells.every(subCell => subCell.owner)) {
+            targetCell.owner = owner;
+            explodeCell(newRow, newCol); // 递归爆炸
+          }
+        }
+      } else {
+       targetCell.owner = owner;
+       targetCell.subCells.forEach(subCell => {
+        if(subCell.owner) {
+          subCell.owner = owner;
+          subCell.animate = true;
+        }
+       })
+       // 找到第一个未被占领的子格子
+       const emptySubCellIndex = targetCell.subCells.findIndex(subCell => !subCell.owner);
+        if (emptySubCellIndex !== -1) {
+          // 占领格子
+          targetCell.owner = owner;
+          targetCell.subCells[emptySubCellIndex].owner = owner;
+          // 触发动画
+          targetCell.subCells[emptySubCellIndex].animate = true;
           
           // 检查是否填满所有子格子
           if (targetCell.subCells.every(subCell => subCell.owner)) {
@@ -150,7 +205,7 @@ function explodeCell(row, col) {
   }
   
   // 检查游戏是否结束
-  checkGameEnd();
+    checkGameEnd();
 }
 
 function checkGameEnd() {
@@ -168,7 +223,36 @@ function checkGameEnd() {
   // 如果只剩一个玩家，游戏结束
   if (owners.size === 1) {
     const winner = [...owners][0];
-    alert(`游戏结束！${winner}获胜！`);
+    currentStatus.value = 3;
+    setTimeout(() => {
+      alert(`${winner} 获胜！`);
+      currentStatus.value = 2;
+    }, 500);
+  } else {
+    currentStatus.value = 0; 
+  }
+}
+function resetGame() {
+  // 重置棋盘
+  board.value = initializeBoard();
+  // 重置玩家
+  currentPlayer.value = players[0];
+  currentStatus.value = 0;
+  owners.clear(); 
+}
+
+function getCurrentStatus(N) {
+  switch (N) {
+    case 0:
+      return "正在进行";
+    case 1:
+      return `${currentPlayer.value} 正在爆炸`;
+    case 2:
+      return "游戏结束";
+    case 3:
+      return "正在结算";
+    default:
+      return "正在进行";
   }
 }
 </script>
@@ -198,14 +282,22 @@ function checkGameEnd() {
 }
 
 .sub-cell {
+  position: relative;
+  transition: all 0.3s ease;
   width: 20px;
   height: 20px;
   margin: 2px;
   background-color: #ddd;
+  transition: background-color 0.3s ease, transform 0.2s;
+  position: relative;
 }
 
 .sub-cell.player1 {
   background-color: #ff5252;
+}
+
+.sub-cell[animate] {
+  animation: expand 0.4s ease-out;
 }
 
 .sub-cell.player2 {
@@ -220,6 +312,29 @@ function checkGameEnd() {
   border-radius: 5px;
 }
 
-/* .center { */
-/* } */
+@keyframes explode {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes particle {
+  0% { transform: translate(0, 0); opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)); opacity: 0; }
+}
+
+.active {
+  animation: explode 0.4s ease-out;
+}
+
+.sub-cell::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  background: currentColor;
+  border-radius: 50%;
+  animation: particle 0.6s ease-out;
+}
+
 </style>
