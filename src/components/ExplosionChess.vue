@@ -1,7 +1,8 @@
 <template>
     <div class="game-info">
-      <p>当前玩家：{{ currentPlayer }}</p>
+      <p>当前玩家：{{ getCurrentPlayerName() }}</p>
       <p>当前状态：{{ getCurrentStatus(currentStatus) }}</p>
+      <p>当前存活玩家：{{ getAlivePlayersNumber() }}</p>
       <button @click="resetGame">重置游戏</button>
       <button @click="$emit('reset-board-size')">退出并重选棋盘大小</button>
     </div>
@@ -25,7 +26,7 @@
           v-for="(subCell, subIndex) in cell.subCells" 
           :key="subIndex" 
           class="sub-cell"
-          :class="subCell.owner"
+          :class="'color-'+subCell.owner"
           @click="handleCellClick(rowIndex, cellIndex, subIndex)"
         ></div>
       </div>
@@ -44,13 +45,21 @@ const props = defineProps({
   boardSize: {
     type: Number,
     required: true
+  },
+  playerColors: {
+    type: Array,
+    required: true
   }
 });
 
+const currentPlayerIndex = ref(0);
+const players = ref([...props.playerColors]);
+console.log(players.value); // 打印出 players.value 以确认其内容是否正确
+const currentPlayer = ref(players.value[currentPlayerIndex.value]);
 const boardSize = ref(props.boardSize);
-const players = ['player1', 'player2'];
-const currentPlayer = ref(players[0]);
 const currentStatus = ref(0); // 0: 正常游戏状态, 1: 扩散中, 2: 游戏结束
+const explodeNum = ref(0);
+
 
 // 初始化棋盘
 const board = ref(initializeBoard());
@@ -129,10 +138,16 @@ async function handleCellClick(row, col , sub) {
   }
   
   // 切换玩家
-  currentPlayer.value = currentPlayer.value === players[0] ? players[1] : players[0];
+  switchToNextPlayer();
 }
 
 async function explodeCell(row, col) {
+  explodeNum.value++;
+  if (explodeNum.value > 25) {
+    if (checkGameEnd()) {
+      return;
+    }
+  }
   currentStatus.value = 1;
   await sleep(1000);
   const owner = board.value[row][col].owner;
@@ -204,10 +219,36 @@ async function explodeCell(row, col) {
   
   // 等待所有递归爆炸完成
   await Promise.all(explosions);
-  
-  console.log(getCurrentStatus(currentStatus.value))
+
+  const owners = new Set();
+  // 收集所有被占领的格子
+  for (let i = 0; i < boardSize.value; i++) {
+    for (let j = 0; j < boardSize.value; j++) {
+      if (board.value[i][j].owner) {
+        owners.add(board.value[i][j].owner);
+      }
+    }
+  }
+  const isHasDead = ref(0);
+  const newPlayers = ref([...players.value]);
+  for (let i = 0; i < players.value.length; i++) {
+    if(!owners.has(players.value[i])) {
+      if(players.value[i] === currentPlayer.value) {
+        isHasDead.value = 1;
+      }
+      console.log(players.value[i] + "被淘汰");
+      const Newindex = newPlayers.value.findIndex(player => player === players.value[i]);
+      newPlayers.value.splice(Newindex, 1);
+    }
+  }
+  players.value = newPlayers.value;
+  if(isHasDead.value === 1) {
+    flushPlayer();
+  }
   // 最后执行游戏结束检查
-  checkGameEnd();
+  if (checkGameEnd()) {
+    return;
+  }
 }
 
 function checkGameEnd() {
@@ -229,6 +270,7 @@ function checkGameEnd() {
     setTimeout(() => {
       currentStatus.value = 2;
     }, 500);
+    return true;
   } else {
     currentStatus.value = 0; 
   }
@@ -238,9 +280,10 @@ function resetGame() {
   boardSize.value = props.boardSize;
   board.value = initializeBoard();
   // 重置玩家
-  currentPlayer.value = players[0];
+  players.value = [...props.playerColors];
+  currentPlayerIndex.value = 0;
+  currentPlayer.value = players.value[currentPlayerIndex.value];
   currentStatus.value = 0;
-  owners.clear(); 
 }
 
 function getCurrentStatus(N) {
@@ -248,14 +291,41 @@ function getCurrentStatus(N) {
     case 0:
       return "正在进行";
     case 1:
-      return `${currentPlayer.value} 正在爆炸`;
+      return `${getCurrentPlayerName()} 正在爆炸`;
     case 2:
-      return "已结束 "+`${currentPlayer.value}获胜`;
+      return "已结束 "+`${getCurrentPlayerName()}获胜`;
     case 3:
       return "正在结算";
     default:
       return "正在进行";
   }
+}
+
+function getCurrentPlayerName() {
+  switch (currentPlayer.value) {
+    case 1: return "红色";
+    case 2: return "橙色";
+    case 3: return "黄色";
+    case 4: return "绿色";
+    case 5: return "蓝色";
+    case 6: return "紫色";
+    case 7: return "黑色";
+    case 8: return "白色";
+    default: return "未知玩家";
+  }
+}
+
+function switchToNextPlayer() {
+  currentPlayerIndex.value = (currentPlayerIndex.value + 1) % players.value.length;
+  currentPlayer.value = players.value[currentPlayerIndex.value];
+}
+function flushPlayer() {
+  currentPlayerIndex.value = currentPlayerIndex.value % players.value.length;
+  currentPlayer.value = players.value[currentPlayerIndex.value];
+}
+
+function getAlivePlayersNumber() {
+  return players.value.length;
 }
 </script>
 
@@ -294,17 +364,18 @@ function getCurrentStatus(N) {
   position: relative;
 }
 
-.sub-cell.player1 {
-  background-color: #ff5252;
+.sub-cell[class^='player'] {
+  /* 通用玩家样式 */
 }
 
-.sub-cell[animate] {
-  animation: expand 0.4s ease-out;
-}
-
-.sub-cell.player2 {
-  background-color: #4caf50;
-}
+.color-1 { background-color: #ff5252; }
+.color-2 { background-color: #ffa726; }
+.color-3 { background-color: #ffee58; }
+.color-4 { background-color: #66bb6a; }
+.color-5 { background-color: #42a5f5; }
+.color-6 { background-color: #ab47bc; }
+.color-7 { background-color: #424242; }
+.color-8 { background-color: #f5f5f5; }
 
 .corner {
   border-radius: 10px 0;
