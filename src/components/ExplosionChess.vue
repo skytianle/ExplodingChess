@@ -54,8 +54,9 @@ const props = defineProps({
 
 const currentPlayerIndex = ref(0);
 const players = ref([...props.playerColors]);
-console.log(players.value); // 打印出 players.value 以确认其内容是否正确
+const lastPlayerIndex = ref(players.value.length-1);
 const currentPlayer = ref(players.value[currentPlayerIndex.value]);
+const lastPlayer = ref(players.value[lastPlayerIndex.value]);
 const boardSize = ref(props.boardSize);
 const currentStatus = ref(0); // 0: 正常游戏状态, 1: 扩散中, 2: 游戏结束
 const explodeNum = ref(0);
@@ -291,7 +292,7 @@ function getCurrentStatus(N) {
     case 0:
       return "正在进行";
     case 1:
-      return `${getCurrentPlayerName()} 正在爆炸`;
+      return `${getLastPlayerName()} 正在爆炸`;
     case 2:
       return "已结束 "+`${getCurrentPlayerName()}获胜`;
     case 3:
@@ -314,10 +315,25 @@ function getCurrentPlayerName() {
     default: return "未知玩家";
   }
 }
+function getLastPlayerName() {
+  switch (lastPlayer.value) {
+    case 1: return "红色";
+    case 2: return "橙色";
+    case 3: return "黄色";
+    case 4: return "绿色";
+    case 5: return "蓝色";
+    case 6: return "紫色";
+    case 7: return "黑色";
+    case 8: return "白色";
+    default: return "未知玩家";
+  }
+}
 
 function switchToNextPlayer() {
   currentPlayerIndex.value = (currentPlayerIndex.value + 1) % players.value.length;
   currentPlayer.value = players.value[currentPlayerIndex.value];
+  lastPlayerIndex.value = (lastPlayerIndex.value + 1) % players.value.length;
+  lastPlayer.value = players.value[lastPlayerIndex.value];
 }
 function flushPlayer() {
   currentPlayerIndex.value = currentPlayerIndex.value % players.value.length;
