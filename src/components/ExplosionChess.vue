@@ -20,7 +20,7 @@
           'corner': isCorner(rowIndex, cellIndex),
           'edge': isEdge(rowIndex, cellIndex),
           'center': isCenter(rowIndex, cellIndex)
-        }"
+        },'color-'+cell.owner+'-bg'"
       >
         <div 
           v-for="(subCell, subIndex) in cell.subCells" 
@@ -310,8 +310,8 @@ function getCurrentPlayerName() {
     case 4: return "绿色";
     case 5: return "蓝色";
     case 6: return "紫色";
-    case 7: return "黑色";
-    case 8: return "白色";
+    case 7: return "粉色";
+    case 8: return "棕色";
     default: return "未知玩家";
   }
 }
@@ -323,8 +323,8 @@ function getLastPlayerName() {
     case 4: return "绿色";
     case 5: return "蓝色";
     case 6: return "紫色";
-    case 7: return "黑色";
-    case 8: return "白色";
+    case 7: return "粉色";
+    case 8: return "棕色";
     default: return "未知玩家";
   }
 }
@@ -358,15 +358,16 @@ function getAlivePlayersNumber() {
 }
 
 .board-cell {
-  width: 60px;
-  height: 60px;
+  width: 75px;
+  height: 75px;
   margin: 2px;
   background-color: #eee;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   align-items: center;
   cursor: pointer;
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .sub-cell {
@@ -378,27 +379,151 @@ function getAlivePlayersNumber() {
   background-color: #ddd;
   transition: background-color 0.3s ease, transform 0.2s;
   position: relative;
+  box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.3);  /* 柔和阴影 */
 }
 
 .sub-cell[class^='player'] {
   /* 通用玩家样式 */
 }
 
-.color-1 { background-color: #ff5252; }
-.color-2 { background-color: #ffa726; }
-.color-3 { background-color: #ffee58; }
-.color-4 { background-color: #66bb6a; }
-.color-5 { background-color: #42a5f5; }
-.color-6 { background-color: #ab47bc; }
-.color-7 { background-color: #424242; }
-.color-8 { background-color: #f5f5f5; }
+/* 主色调 */
+.color-1 { background-color: #ff5252; }  /* 红 */
+.color-2 { background-color: #ffa726; }  /* 橙 */
+.color-3 { background-color: #ffee58; }  /* 黄 */
+.color-4 { background-color: #66bb6a; }  /* 绿 */
+.color-5 { background-color: #42a5f5; }  /* 蓝 */
+.color-6 { background-color: #ab47bc; }  /* 紫 */
+.color-7 { background-color: #e91e63; }  /* 粉） */
+.color-8 { background-color: #8d6e63; }  /* 棕 */
 
-.corner {
-  border-radius: 10px 0;
+/* 对应的浅背景色 */
+.color-1-bg { background-color: #ffb3b3; }
+.color-2-bg { background-color: #ffcc80; }
+.color-3-bg { background-color: #fff59d; }
+.color-4-bg { background-color: #a5d6a7; }
+.color-5-bg { background-color: #90caf9; }
+.color-6-bg { background-color: #ce93d8; }
+.color-7-bg { background-color: #f8bbd0; }
+.color-8-bg { background-color: #d7ccc8; }
+
+
+
+.corner,.edge {
+  border-radius: 5px;
+}
+.board-row:first-of-type .corner:first-of-type {
+  border-radius: 15px 0 0 0;
+}
+.board-row:first-of-type .corner:first-of-type .sub-cell:first-of-type {
+  grid-row: 3;
+  grid-column: 2;
+}
+.board-row:first-of-type .corner:first-of-type .sub-cell:last-of-type {
+  grid-row: 2;
+  grid-column: 3;
 }
 
-.edge {
-  border-radius: 5px;
+.board-row:first-of-type .corner:last-of-type {
+  border-radius: 0 15px 0 0;
+}
+.board-row:first-of-type .corner:last-of-type .sub-cell:first-of-type {
+  grid-row: 2;
+  grid-column: 1;
+}
+.board-row:first-of-type .corner:last-of-type .sub-cell:last-of-type {
+  grid-row: 3;
+  grid-column: 2;
+}
+
+.board-row:last-of-type .corner:first-of-type {
+  border-radius: 0 0 0 15px;
+}
+.board-row:last-of-type .corner:first-of-type .sub-cell:first-of-type {
+  grid-row: 1;
+  grid-column: 2;
+}
+.board-row:last-of-type .corner:first-of-type .sub-cell:last-of-type {
+  grid-row: 2;
+  grid-column: 3;
+}
+
+.board-row:last-of-type .corner:last-of-type {
+  border-radius: 0 0 15px 0;
+}
+.board-row:last-of-type .corner:last-of-type .sub-cell:first-of-type {
+  grid-row: 2;
+  grid-column: 1;
+}
+.board-row:last-of-type .corner:last-of-type .sub-cell:last-of-type {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.board-row:first-of-type .edge .sub-cell:first-of-type {
+  grid-row: 2;
+  grid-column: 1;
+}
+.board-row:first-of-type .edge .sub-cell:nth-of-type(2)  {
+  grid-row: 3;
+  grid-column: 2;
+}
+.board-row:first-of-type .edge .sub-cell:last-of-type {
+  grid-row: 2;
+  grid-column: 3;
+}
+.board-row:nth-of-type(2) .edge:first-of-type .sub-cell:first-of-type,.board-row:nth-of-type(3) .edge:first-of-type .sub-cell:first-of-type,.board-row:nth-of-type(4) .edge:first-of-type .sub-cell:first-of-type {
+  grid-row: 1;
+  grid-column: 2;
+}
+.board-row:nth-of-type(2) .edge:first-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(3) .edge:first-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(4) .edge:first-of-type .sub-cell:nth-of-type(2) {
+  grid-row: 2;
+  grid-column: 3;
+}
+.board-row:nth-of-type(2) .edge:first-of-type .sub-cell:last-of-type,.board-row:nth-of-type(3) .edge:first-of-type .sub-cell:last-of-type,.board-row:nth-of-type(4) .edge:first-of-type .sub-cell:last-of-type {
+  grid-row: 3;
+  grid-column: 2;
+}
+.board-row:nth-of-type(2) .edge:last-of-type .sub-cell:first-of-type,.board-row:nth-of-type(3) .edge:last-of-type .sub-cell:first-of-type,.board-row:nth-of-type(4) .edge:last-of-type .sub-cell:first-of-type {
+  grid-row: 1;
+  grid-column: 2;
+}
+.board-row:nth-of-type(2) .edge:last-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(3) .edge:last-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(4) .edge:last-of-type .sub-cell:nth-of-type(2) {
+  grid-row: 2;
+  grid-column: 1;
+}
+.board-row:nth-of-type(2) .edge:last-of-type .sub-cell:last-of-type,.board-row:nth-of-type(3) .edge:last-of-type .sub-cell:last-of-type,.board-row:nth-of-type(4) .edge:last-of-type .sub-cell:last-of-type {
+  grid-row: 3;
+  grid-column: 2;
+}
+.board-row:last-of-type .edge .sub-cell:first-of-type {
+  grid-row: 2;
+  grid-column: 1;
+}
+.board-row:last-of-type .edge .sub-cell:nth-of-type(2)  {
+  grid-row: 1;
+  grid-column: 2;
+}
+.board-row:last-of-type .edge .sub-cell:last-of-type {
+  grid-row: 2;
+  grid-column: 3;
+}
+
+.center .sub-cell:first-of-type {
+  grid-row: 2;
+  grid-column: 1;
+}
+.center .sub-cell:nth-of-type(2) {
+  grid-row: 1;
+  grid-column: 2;
+}
+.center .sub-cell:nth-of-type(3) {
+  grid-row: 2;
+  grid-column: 3;
+}
+.center .sub-cell:last-of-type {
+  grid-row: 3;
+  grid-column: 2;
 }
 
 @keyframes explode {

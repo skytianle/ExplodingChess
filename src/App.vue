@@ -1,6 +1,6 @@
 <template>
   <div class="game-container">
-    <h1>爆炸棋 天乐出品</h1>
+    <h1>爆炸棋 天乐出品V1.5</h1>
     <div v-if="!gameStarted" class="setup-screen">
       <div class="player-selection">
         <h3>选择玩家颜色（至少2个）</h3>
@@ -49,8 +49,8 @@ const colorOptions = [
   { id: 4, name: '绿色', class: 'green' },
   { id: 5, name: '蓝色', class: 'blue' },
   { id: 6, name: '紫色', class: 'purple' },
-  { id: 7, name: '黑色', class: 'black' },
-  { id: 8, name: '白色', class: 'white' }
+  { id: 7, name: '粉色', class: 'pink' },
+  { id: 8, name: '棕色', class: 'brown' }
 ];
 
 const handleResetBoard = () => {
@@ -125,8 +125,8 @@ const startGame = () => {
   &.green { background: #66bb6a; }
   &.blue { background: #42a5f5; }
   &.purple { background: #ab47bc; }
-  &.black { background: #424242; color: white; }
-  &.white { background: #f5f5f5; }
+  &.pink { background: #e91e63; }
+  &.brown { background: #8d6e63; }
 }
 .size-selector select {
   padding: 8px 12px;
