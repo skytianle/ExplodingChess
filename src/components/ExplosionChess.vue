@@ -35,12 +35,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,inject } from 'vue';
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
+const msg = inject('msg');
+const showmsg = (message) => {
+  msg.message = message;
+  msg.show = true;
+}
 const props = defineProps({
   boardSize: {
     type: Number,
@@ -113,7 +117,7 @@ function isCenter(row, col) {
 
 async function handleCellClick(row, col , sub) {
   if (currentStatus.value !== 0) {
-    alert('游戏结束或者正在扩散或者正在结算，不允许行动');
+    showmsg('游戏结束或者正在扩散或者正在结算，不允许行动');
     return;
   }
   const cell = board.value[row][col];
@@ -124,7 +128,7 @@ async function handleCellClick(row, col , sub) {
   } else if (cell.owner) {
     if (cell.owner === currentPlayer.value) {
     } else {
-     alert('不能在对方格子上放置棋子');
+     showmsg('不能在对方格子上放置棋子')
       return; // 阻止放置棋子，返回不执行后面的代码 
     }
   }
@@ -472,27 +476,27 @@ function getAlivePlayersNumber() {
   grid-row: 2;
   grid-column: 3;
 }
-.board-row:nth-of-type(2) .edge:first-of-type .sub-cell:first-of-type,.board-row:nth-of-type(3) .edge:first-of-type .sub-cell:first-of-type,.board-row:nth-of-type(4) .edge:first-of-type .sub-cell:first-of-type {
+.board-row:not(:first-of-type):not(:last-of-type) .edge:first-of-type .sub-cell:first-of-type {
   grid-row: 1;
   grid-column: 2;
 }
-.board-row:nth-of-type(2) .edge:first-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(3) .edge:first-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(4) .edge:first-of-type .sub-cell:nth-of-type(2) {
+.board-row:not(:first-of-type):not(:last-of-type) .edge:first-of-type .sub-cell:nth-of-type(2) {
   grid-row: 2;
   grid-column: 3;
 }
-.board-row:nth-of-type(2) .edge:first-of-type .sub-cell:last-of-type,.board-row:nth-of-type(3) .edge:first-of-type .sub-cell:last-of-type,.board-row:nth-of-type(4) .edge:first-of-type .sub-cell:last-of-type {
+.board-row:not(:first-of-type):not(:last-of-type) .edge:first-of-type .sub-cell:last-of-type {
   grid-row: 3;
   grid-column: 2;
 }
-.board-row:nth-of-type(2) .edge:last-of-type .sub-cell:first-of-type,.board-row:nth-of-type(3) .edge:last-of-type .sub-cell:first-of-type,.board-row:nth-of-type(4) .edge:last-of-type .sub-cell:first-of-type {
+.board-row:not(:first-of-type):not(:last-of-type) .edge:last-of-type .sub-cell:first-of-type {
   grid-row: 1;
   grid-column: 2;
 }
-.board-row:nth-of-type(2) .edge:last-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(3) .edge:last-of-type .sub-cell:nth-of-type(2),.board-row:nth-of-type(4) .edge:last-of-type .sub-cell:nth-of-type(2) {
+.board-row:not(:first-of-type):not(:last-of-type) .edge:last-of-type .sub-cell:nth-of-type(2) {
   grid-row: 2;
   grid-column: 1;
 }
-.board-row:nth-of-type(2) .edge:last-of-type .sub-cell:last-of-type,.board-row:nth-of-type(3) .edge:last-of-type .sub-cell:last-of-type,.board-row:nth-of-type(4) .edge:last-of-type .sub-cell:last-of-type {
+.board-row:not(:first-of-type):not(:last-of-type) .edge:last-of-type .sub-cell:last-of-type {
   grid-row: 3;
   grid-column: 2;
 }

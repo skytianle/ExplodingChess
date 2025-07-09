@@ -1,6 +1,7 @@
 <template>
   <div class="game-container">
-    <h1>爆炸棋 天乐出品V1.5</h1>
+    <CustomMsg v-model:show="msg.show" :msg="msg.message" @closed="resetmsg" />
+    <h1>爆炸棋 天乐出品 V1.6</h1>
     <div v-if="!gameStarted" class="setup-screen">
       <div class="player-selection">
         <h3>选择玩家颜色（至少2个）</h3>
@@ -35,13 +36,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref,reactive,provide } from 'vue'
 import ExplosionChess from './components/ExplosionChess.vue'
-
+import CustomMsg from './components/CustomMsg.vue'
 const gameStarted = ref(false)
 const selectedSize = ref(5);
 const selectedColors = ref([1, 2]); // 默认选择红橙两色
-
+const previousColors = ref([1, 2]); // 保存上一次选择的颜色
+const msg = reactive({
+  message: '',
+  show: false
+})
+provide('msg', msg)
 const colorOptions = [
   { id: 1, name: '红色', class: 'red' },
   { id: 2, name: '橙色', class: 'orange' },
@@ -53,14 +59,24 @@ const colorOptions = [
   { id: 8, name: '棕色', class: 'brown' }
 ];
 
+const showmsg = (message) => {
+  msg.message = message;
+  msg.show = true;
+}
+const resetmsg = () => {
+  msg.show = false;
+  msg.message = '';
+}
 const handleResetBoard = () => {
   gameStarted.value = false;
 }
 
 const validateSelection = () => {
   if (selectedColors.value.length < 2) {
-    alert('请至少选择两个玩家颜色！');
-    selectedColors.value = [1, 2];
+    showmsg('请至少选择两种玩家颜色！');
+    selectedColors.value = previousColors.value;
+  } else {
+    previousColors.value = selectedColors.value;
   }
 };
 
